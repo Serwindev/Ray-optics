@@ -1,6 +1,7 @@
 #include <SFML/Graphics.hpp>
 #include <math.h>
 #include <cstdlib>
+#include <algorithm>
 
 bool intersect(sf::Vector2f start, sf::Vector2f end, sf::Vector2f m_start, sf::Vector2f m_end, sf::Vector2f &hitPoint) {
     float x1 = start.x;
@@ -31,6 +32,21 @@ bool intersect(sf::Vector2f start, sf::Vector2f end, sf::Vector2f m_start, sf::V
     return false;
 };
 
+sf::Vector2f reflect(sf::Vector2f D, sf::Vector2f N) {
+    float dot = D.x * N.x + D.y * N.y;
+
+    if (dot > 0) {
+        N = -N;
+        dot = D.x * N.x + D.y * N.y;
+    }
+
+    sf::Vector2f R;
+    R.x = D.x - 2*dot*N.x;
+    R.y = D.y - 2*dot*N.y;
+
+    return R;
+}
+
 int main()
 {
     sf::RenderWindow window(
@@ -51,27 +67,52 @@ int main()
         float speed;
     };
 
-    sf::VertexArray Mirror(sf::PrimitiveType::Lines, 2);
-    Mirror[0].position = {500.f, 250.f};
-    Mirror[1].position = {500.f, 350.f};
+    struct Mirror
+    {
+        sf::Vector2f a;
+        sf::Vector2f b;
+        sf::Vector2f edge;
+        sf::Vector2f Normal;
+    };
+
 
     std::vector<Ray> rays;
+    std::vector<Mirror> mirrors;
+
     sf::Vector2f hit;
-    
-    
+
     while (window.isOpen())
     {
         while (const auto event = window.pollEvent())
         {
             if (event->is<sf::Event::Closed>())
                 window.close();   
+
+            if (const auto* keyEvent = event->getIf<sf::Event::KeyPressed>()) {
+                if (keyEvent->code == sf::Keyboard::Key::Space) {
+                    Mirror mirror;
+
+                    sf::Vector2i mousePos = sf::Mouse::getPosition(window);
+
+                    mirror.a = {mousePos.x, mousePos.y + 75};
+                    mirror.b = {mousePos.x, mousePos.y - 75};
+
+                    mirror.edge = mirror.b - mirror.a;
+                    mirror.Normal = {-mirror.edge.y, mirror.edge.x};
+
+                    float n_len = sqrt(mirror.Normal.x*mirror.Normal.x + mirror.Normal.y*mirror.Normal.y);
+                    mirror.Normal /= n_len;
+
+                    mirrors.push_back(mirror);
+                }
+            }
         }
 
         if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Right)) {
                 Ray ray;
                 int randomNum = (std::rand() % (max-min + 1)) + min;
                 ray.start = {0.f,300.f + randomNum};
-                ray.end = {50.f, 300.f};
+                ray.end = {75.f, 300.f};
 
                 ray.direction = ray.end - ray.start;
 
@@ -82,6 +123,20 @@ int main()
 
                 rays.push_back(ray);
             }
+        
+        
+
+            for (auto &ray : rays) {
+                for (auto &mirror : mirrors) {
+                    if (intersect(ray.start, ray.end, mirror.a, mirror.b, hit)) {
+                        sf::Vector2f reflected = reflect(ray.direction, mirror.Normal);
+
+                        ray.direction = reflected;
+                        ray.start = hit + ray.direction * 0.1f;
+                        ray.end = ray.start + ray.direction * 75.f;
+                    }
+                }
+            }
 
             for (auto &ray : rays) {
                 sf::Vector2f movement {
@@ -91,11 +146,6 @@ int main()
 
                 ray.start += movement;
                 ray.end += movement;
-
-                if (intersect(ray.start, ray.end, Mirror[0].position, Mirror[1].position, hit)) {
-                    ray.end = hit;
-                    rays.erase(rays.begin());
-                }
             }
 
 
@@ -107,11 +157,22 @@ int main()
             window.draw(line);
             
 
-            if (ray.start.x > 800 || ray.start.y > 600) {
-                rays.erase(rays.begin());
-            }
+            rays.erase(
+                std::remove_if(rays.begin(), rays.end(), [](const Ray &r) {
+                    return r.start.x > 800 || r.start.y > 600 || r.start.x < 0 || r.start.y <0;
+                }),
+                rays.end()
+            );
         }
-        window.draw(Mirror);
+        
+        for (auto &mirror : mirrors) {
+            sf::VertexArray mirror_line(sf::PrimitiveType::Lines, 2);
+            mirror_line[0].position = mirror.a;
+            mirror_line[1].position = mirror.b;
+            
+            window.draw(mirror_line);
+        }
+
         window.display();
         
     }
