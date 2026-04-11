@@ -1,9 +1,13 @@
-#include <SFML/Graphics.hpp>
 #include <math.h>
 #include <cstdlib>
+#include <ctime>
 #include <algorithm>
+#include "raylib.h"
+#include <vector>
+#include <cmath>
+#include <cstdlib>
 
-bool intersect(sf::Vector2f start, sf::Vector2f end, sf::Vector2f m_start, sf::Vector2f m_end, sf::Vector2f &hitPoint) {
+bool intersect(Vector2 start, Vector2 end, Vector2 m_start, Vector2 m_end, Vector2 &hitPoint) {
     float x1 = start.x;
     float y1 = start.y;
     
@@ -23,7 +27,7 @@ bool intersect(sf::Vector2f start, sf::Vector2f end, sf::Vector2f m_start, sf::V
     float t = ((x1-x3)*(y3-y4) - (y1-y3)*(x3-x4))  / den;
     float u = -((x1-x2)*(y1-y3) - (y1-y2)*(x1-x3)) / den;
 
-    if (t > 0 && t < 1 && u > 0 && u < 1) {
+    if (t >= 0 && t <= 1 && u >= 0 && u <= 1) {
         hitPoint.x = x1 + t*(x2-x1);
         hitPoint.y = y1 + t*(y2-y1);
         return true;
@@ -32,15 +36,31 @@ bool intersect(sf::Vector2f start, sf::Vector2f end, sf::Vector2f m_start, sf::V
     return false;
 };
 
-sf::Vector2f reflect(sf::Vector2f D, sf::Vector2f N) {
+Vector2 operate(Vector2 a, Vector2 b, int oper) {
+    Vector2 final;
+    if (oper == 1) { // Add
+        final = {a.x + b.x, a.y + b.y};
+    }
+    else if (oper == 2) { // Subtract
+        final = {a.x - b.x, a.y - b.y};
+    }
+    return final;
+}
+
+Vector2 mul(Vector2 a, float b) {
+    return {a.x*b, a.y*b};
+}
+
+
+Vector2 reflect(Vector2 D, Vector2 N) {
     float dot = D.x * N.x + D.y * N.y;
 
     if (dot > 0) {
-        N = -N;
+        N = operate({0,0}, N,2);
         dot = D.x * N.x + D.y * N.y;
     }
 
-    sf::Vector2f R;
+    Vector2 R;
     R.x = D.x - 2*dot*N.x;
     R.y = D.y - 2*dot*N.y;
 
@@ -49,10 +69,8 @@ sf::Vector2f reflect(sf::Vector2f D, sf::Vector2f N) {
 
 int main()
 {
-    sf::RenderWindow window(
-        sf::VideoMode(sf::Vector2u(800, 600)),
-        "Test"
-    );
+    InitWindow(800,600,"Ray Optics");
+    SetTargetFPS(30);
 
     std::srand(std::time(0));
     int min = -5;
@@ -61,121 +79,118 @@ int main()
 
     struct Ray
     {
-        sf::Vector2f start;
-        sf::Vector2f end;
-        sf::Vector2f direction;
+        Vector2 start;
+        Vector2 end;
+        Vector2 direction;
         float speed;
     };
 
     struct Mirror
     {
-        sf::Vector2f a;
-        sf::Vector2f b;
-        sf::Vector2f edge;
-        sf::Vector2f Normal;
+        Vector2 a;
+        Vector2 b;
+        Vector2 edge;
+        Vector2 Normal;
     };
 
 
     std::vector<Ray> rays;
     std::vector<Mirror> mirrors;
 
-    sf::Vector2f hit;
+    Vector2 hit;
 
-    while (window.isOpen())
+    while (!WindowShouldClose())
     {
-        while (const auto event = window.pollEvent())
-        {
-            if (event->is<sf::Event::Closed>())
-                window.close();   
+        if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+            Mirror mirror;
 
-            if (const auto* keyEvent = event->getIf<sf::Event::KeyPressed>()) {
-                if (keyEvent->code == sf::Keyboard::Key::Space) {
-                    Mirror mirror;
+            Vector2 mousePos = GetMousePosition();
 
-                    sf::Vector2i mousePos = sf::Mouse::getPosition(window);
+            mirror.a = {mousePos.x, mousePos.y + 75};
+            mirror.b = {mousePos.x, mousePos.y - 75};
 
-                    mirror.a = {mousePos.x, mousePos.y + 75};
-                    mirror.b = {mousePos.x, mousePos.y - 75};
+            mirror.edge = operate(mirror.b, mirror.a, 2);
+            mirror.Normal = {-mirror.edge.y, mirror.edge.x};
 
-                    mirror.edge = mirror.b - mirror.a;
-                    mirror.Normal = {-mirror.edge.y, mirror.edge.x};
+            float n_len = sqrt(mirror.Normal.x*mirror.Normal.x + mirror.Normal.y*mirror.Normal.y);
+            mirror.Normal.x /= n_len;
+            mirror.Normal.y /= n_len;
 
-                    float n_len = sqrt(mirror.Normal.x*mirror.Normal.x + mirror.Normal.y*mirror.Normal.y);
-                    mirror.Normal /= n_len;
-
-                    mirrors.push_back(mirror);
-                }
-            }
+            mirrors.push_back(mirror);
+        
         }
 
-        if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Right)) {
+        if (IsMouseButtonDown(MOUSE_RIGHT_BUTTON)) {
                 Ray ray;
                 int randomNum = (std::rand() % (max-min + 1)) + min;
                 ray.start = {0.f,300.f + randomNum};
-                ray.end = {75.f, 300.f};
+                
+                float angle = randomNum * 0.01f;
+                ray.direction = {cos(angle), sin(angle)};
 
-                ray.direction = ray.end - ray.start;
+                ray.end = operate(ray.start, mul(ray.direction, 500.f), 1);
 
                 float length = sqrt(ray.direction.x*ray.direction.x + ray.direction.y*ray.direction.y);
-                ray.direction /= length;
+                ray.direction.x /= length;
+                ray.direction.y /= length;
 
-                ray.speed = 5.f;
+                ray.speed = 30.f;
 
                 rays.push_back(ray);
             }
         
         
-
+            BeginDrawing();
             for (auto &ray : rays) {
-                for (auto &mirror : mirrors) {
-                    if (intersect(ray.start, ray.end, mirror.a, mirror.b, hit)) {
-                        sf::Vector2f reflected = reflect(ray.direction, mirror.Normal);
 
-                        ray.direction = reflected;
-                        ray.start = hit + ray.direction * 0.1f;
-                        ray.end = ray.start + ray.direction * 75.f;
-                    }
-                }
-            }
-
-            for (auto &ray : rays) {
-                sf::Vector2f movement {
+                Vector2 movement = {
                     ray.direction.x * ray.speed,
                     ray.direction.y * ray.speed
                 };
 
-                ray.start += movement;
-                ray.end += movement;
+                Vector2 nStart = operate(ray.start, movement, 1);
+               // Vector2 nEnd = operate(ray.end, movement, 1);
+                bool reflectedFrame = false;
+
+                for (auto &mirror : mirrors) {
+                    if (intersect(ray.start, nStart, mirror.a, mirror.b, hit)) {
+                        Vector2 reflected = reflect(ray.direction, mirror.Normal);
+
+                        ray.direction = reflected;
+                        ray.start = operate(hit, mul(ray.direction, .1f), 1);
+                        ray.end = operate(ray.start , mul(ray.direction, 500.f), 1);
+
+                        reflectedFrame = true;
+                        break;
+                    }
+                }
+                if (!reflectedFrame) {
+                    ray.start = nStart;
+                    ray.end = operate(ray.start, mul(ray.direction, 500.f), 1);
+                }
             }
 
-
-        window.clear();
-        for (auto &ray : rays) {
-            sf::VertexArray line(sf::PrimitiveType::Lines, 2);
-            line[0].position = ray.start;
-            line[1].position = ray.end;
-            window.draw(line);
             
+
+            ClearBackground(BLACK);
+            for (auto &ray : rays) {
+                DrawLine(ray.start.x, ray.start.y, ray.end.x, ray.end.y, YELLOW);
+            }
 
             rays.erase(
-                std::remove_if(rays.begin(), rays.end(), [](const Ray &r) {
-                    return r.start.x > 800 || r.start.y > 600 || r.start.x < 0 || r.start.y <0;
-                }),
-                rays.end()
-            );
-        }
-        
-        for (auto &mirror : mirrors) {
-            sf::VertexArray mirror_line(sf::PrimitiveType::Lines, 2);
-            mirror_line[0].position = mirror.a;
-            mirror_line[1].position = mirror.b;
+                    std::remove_if(rays.begin(), rays.end(), [](const Ray &r) {
+                        return r.start.x > 800 || r.start.y > 600 || r.start.x < 0 || r.start.y <0;
+                    }),
+                    rays.end()
+                );
             
-            window.draw(mirror_line);
-        }
-
-        window.display();
+            for (auto &mirror : mirrors) {
+                DrawLine(mirror.a.x, mirror.a.y, mirror.b.x, mirror.b.y, WHITE);
+            }
         
+        
+            EndDrawing();
     }
-
+    
     return 0;
 }
