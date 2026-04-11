@@ -1,0 +1,22 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug SFML",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/main.exe",
+      "cwd": "${workspaceFolder}",
+      "MIMode": "gdb",
+      "miDebuggerPath": "E:/Coding/MSYS2/mingw64/bin/gdb.exe",
+      "preLaunchTask": "build",
+      "externalConsole": true
+    }
+  ],
+  "environment": [
+  {
+    "name": "PATH",
+    "value": "E:/Coding/Libraries/SFML-3.0.2/bin;E:/Coding/MSYS2/mingw64/bin;${env:PATH}"
+  }
+]
+}

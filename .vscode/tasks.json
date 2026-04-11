@@ -1,0 +1,27 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "build",
+      "type": "shell",
+      "command": "E:/Coding/MSYS2/mingw64/bin/g++.exe",
+      "args": [
+        "-std=c++17",
+        "-g",
+        "main.cpp",
+        "-o",
+        "main.exe",
+        "-I", "E:/Coding/MSYS2/mingw64/include",
+        "-L", "E:/Coding/MSYS2/mingw64/lib",
+        "-lsfml-graphics",
+        "-lsfml-window",
+        "-lsfml-system"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": ["$gcc"]
+    }
+  ]
+}
