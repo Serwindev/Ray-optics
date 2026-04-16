@@ -1,198 +1,116 @@
-# 🔦 Ray Optics Simulator (SFML → Raylib → Web)
+# 🌟 Ray Optics — A Light Reflection Game
 
-> ⚠️ This README was generated with the help of AI.
-
----
-
-## 📌 Overview
-
-This project is a **2D Ray Optics Simulator** built using C++.
-It simulates how light rays interact with mirrors using basic physics concepts like:
-
-* Ray direction & movement
-* Line intersection
-* Surface normals
-* Reflection (vector math)
-
-The project started with **SFML**, then transitioned to **raylib**, and is now being prepared for **web deployment using Emscripten**.
+A simple yet engaging game built using **C++ and Raylib**, where you control mirrors to guide light rays to a target.
 
 ---
 
-## 🚀 Evolution of the Project
+## 🎮 About the Game
 
-### 🧩 Phase 1 — SFML (Initial Build)
+Ray Optics started as a basic **light simulation project**, but after feedback and improvements, it evolved into a **playable game**.
 
-* Implemented ray movement using `sf::Vector2f`
-* Learned:
+The idea is simple:
 
-  * Vector normalization
-  * Direction × speed = movement
-  * Rendering lines using `sf::VertexArray`
-* Issues faced:
+> Use mirrors to reflect light rays and hit the target.
 
-  * Frame updates tied to events
-  * Limited control over performance
+Sounds easy? It gets interesting when you try it 😉
 
 ---
 
-### 🔄 Phase 2 — Raylib (Rewrite)
+## ✨ Features
 
-Switched to raylib for:
-
-* Simpler API
-* Better real-time rendering loop
-* Easier input handling
-
-#### Improvements:
-
-* Continuous rendering (`BeginDrawing()` loop)
-* Cleaner input system (`IsMouseButtonDown`, `IsKeyPressed`)
-* Lightweight and faster than SFML
+* 🔦 Continuous ray emission system
+* 🪞 Place mirrors freely (diagonal, short, long — your choice)
+* 🎯 Target-based gameplay (hit the blue circle)
+* 📈 XP system for progression
+* 🔁 Restart system with penalties
+* 🎮 Simple and clean controls
 
 ---
 
-### 💡 Core Concepts Implemented
+## 🕹️ Controls
 
-#### 1. Ray Movement
-
-```text
-position += direction × speed
-```
-
-#### 2. Line Intersection
-
-Used parametric line equations with `t` and `u`:
-
-* Detects if a ray intersects a mirror segment
-* Ensures intersection happens within segment bounds
-
-#### 3. Surface Normal
-
-For a mirror edge:
-
-```text
-normal = (-edge.y, edge.x)
-```
-
-#### 4. Reflection Formula
-
-```text
-R = D - 2(D · N)N
-```
-
-Where:
-
-* `D` = incoming direction
-* `N` = normalized normal
-* `R` = reflected direction
+* **Right Click** → Shoot rays
+* **Left Click + Drag** → Place mirrors
+* **R** → Restart (costs XP)
+* **Enter** → Start game
 
 ---
 
-### ⚠️ Problems Solved During Development
+## 🧠 Gameplay Concept
 
-* ❌ Rays passing through mirrors (tunneling)
-* ❌ Incorrect reflections (wrong mirror detection)
-* ❌ Double movement per frame
-* ❌ Unstable collision detection
+* Rays originate from the left side
+* You place mirrors strategically
+* The goal is to **reflect rays into the blue circle**
+* Each successful hit:
 
-#### ✅ Final Fixes:
-
-* Predict next position before moving
-* Use **current → next** segment for intersection
-* Choose **closest intersection (smallest t)**
-* Offset hit point slightly to prevent sticking
+  * Moves the target
+  * Resets mirrors
+  * Rewards XP
 
 ---
 
-## 🖥️ Controls
+## 📦 Download & Play
 
-| Action     | Input            |
-| ---------- | ---------------- |
-| Add mirror | Left Click       |
-| Emit rays  | Hold Right Click |
+👉 Download the game here:
+[Download Ray Optics](https://github.com/Serwindev/Ray-optics/releases)
 
----
-
-## 🌐 Phase 3 — Web (Emscripten)
-
-The project is being prepared to run in the browser using:
-
-* **Emscripten**
-* **WebAssembly (WASM)**
-* **raylib WebGL backend**
-
-### Why Web?
-
-* Shareable demo
-* Interactive learning tool
-* Can be embedded in educational platforms
+> ⚠️ Extract the `.zip` file before running the `.exe`
 
 ---
 
-## 🧠 What This Project Teaches
+## ⚙️ Tech Stack
 
-* Vector mathematics in graphics
-* Collision detection (line-line intersection)
-* Reflection physics
-* Game/render loops
-* Transitioning between frameworks (SFML → raylib)
-* Preparing native C++ apps for the web
+* **Language:** C++
+* **Graphics Library:** Raylib
+* **Concepts Used:**
 
----
-
-## 📁 Project Structure
-
-```text
-project/
-│
-├── main.cpp
-│
-├── index.html
-├── index.js
-├── index.wasm
-│
-└── README.md
-```
+  * Ray casting
+  * Line intersection
+  * Reflection physics
+  * Collision detection
 
 ---
 
-## ⚙️ Build (Raylib - Desktop)
+## 🚧 Why Not Web Version?
 
-Example (MinGW):
+I experimented with compiling the project to **WebAssembly**, but it turned out to be quite complex and unstable for now.
 
-```bash
-g++ main.cpp -o main.exe -lraylib -lopengl32 -lgdi32 -lwinmm
-```
+So currently:
 
----
-
-## 🌍 Build (Web - Emscripten)
-
-```bash
-emcc src/main.c -o build/index.html \
-    -I path/to/raylib/src \
-    -L path/to/raylib/src \
-    -lraylib \
-    -s USE_GLFW=3 \
-    -s ASYNCIFY
-```
+> 💻 The game is distributed as a **.exe file**
 
 ---
 
-## 🔮 Future Improvements
+## 🧪 Development Notes
 
-* 🔁 Laser mode (single ray with multiple reflections)
-* 🧊 Refraction (glass simulation)
-* 🎯 Mirror rotation
-* 🎮 Interactive UI controls
-* 📱 Mobile compatibility (web)
+* Originally built as a **simulation**
+* Later transformed into a **game**
+* Focused on improving **UX and interaction**
+* Mirror system redesigned for **full freedom**
 
 ---
 
-## 🙌 Credits
+## ❤️ Credits
 
-* Built using **raylib**
-* Inspired by basic ray tracing and optics simulations
-* README generated with AI assistance
+Made with ❤️ by **Serwin.dev**
+Readme was written by AI
+
+---
+
+## 🚀 Future Ideas
+
+* 🌐 Web version (when stable)
+* 📱 Mobile support
+* 🎯 Levels / difficulty system
+* 🎨 Better UI & effects
+
+---
+
+## ⭐ Support
+
+If you liked the project:
+
+* Give it a ⭐ on GitHub
+* Share it with your friends
 
 ---
