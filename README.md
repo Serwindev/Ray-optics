@@ -16,6 +16,11 @@ Sounds easy? It gets interesting when you try it 😉
 
 ---
 
+## Demo
+![Ray optics Demo](demo(3).gif)  
+
+---
+
 ## ✨ Features
 
 * 🔦 Continuous ray emission system
